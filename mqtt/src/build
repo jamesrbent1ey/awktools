@@ -1,0 +1,46 @@
+#!/usr/bin/awk -f
+function executeCommand(cmd,		result, lines) {
+	lines = ""
+	while( ( cmd | getline result ) > 0 ) {
+		gsub(/\n/,"",result)
+		gsub(/\r/,"",result)
+		lines = lines result "\n"
+	}
+		
+	#close command
+	close(cmd)
+	
+	return lines
+}
+BEGIN{
+  if(ARGC <= 1) {
+     print "Usage:  build <output file name>"
+     exit(1)
+  }
+  output = "../output/"ARGV[1]
+  executeCommand("rm -f "output)
+
+  main = ""
+  files = executeCommand("ls -R * | grep '.awk'")
+  delete fa
+  split(files,fa,"\n")
+  print "#!/usr/bin/awk -f" > output
+  for(i = 1; i <= length(fa); i++) {
+     file = executeCommand("find . -name "fa[i]" -print")
+     gsub(/\n/,"",file)
+     if( length(file) < 5 ) {
+        #print "invalid file"file
+        break
+     }
+     if( index(file,"main.awk") > 0 ) {
+        main = file
+        continue
+     }
+     executeCommand("cat "file" >> "output)
+     #print fa[i]
+  }
+  if(length(main) > 0) {
+     executeCommand("cat "main" >> "output)
+  }
+  exit(0)
+}
